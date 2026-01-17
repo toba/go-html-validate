@@ -2,7 +2,7 @@
 package reporter
 
 import (
-	"github.com/jschaf/go-html-validate/rules"
+	"github.com/STR-Consulting/go-html-validate/rules"
 )
 
 // Reporter defines the interface for outputting lint results.

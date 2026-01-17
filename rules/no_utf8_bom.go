@@ -1,7 +1,7 @@
 package rules
 
 import (
-	"github.com/jschaf/go-html-validate/parser"
+	"github.com/STR-Consulting/go-html-validate/parser"
 )
 
 // NoUTF8BOM checks that files don't start with a UTF-8 BOM.

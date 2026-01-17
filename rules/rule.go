@@ -1,7 +1,7 @@
 package rules
 
 import (
-	"github.com/jschaf/go-html-validate/parser"
+	"github.com/STR-Consulting/go-html-validate/parser"
 )
 
 // Severity indicates how serious a lint violation is.

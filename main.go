@@ -29,12 +29,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 
-	"github.com/jschaf/go-html-validate/config"
-	"github.com/jschaf/go-html-validate/linter"
-	"github.com/jschaf/go-html-validate/reporter"
-	"github.com/jschaf/go-html-validate/rules"
+	"github.com/STR-Consulting/go-html-validate/config"
+	"github.com/STR-Consulting/go-html-validate/linter"
+	"github.com/STR-Consulting/go-html-validate/reporter"
+	"github.com/STR-Consulting/go-html-validate/rules"
 )
 
 type stringSlice []string
@@ -57,6 +58,7 @@ func run() int {
 		ignoreFlags  stringSlice
 		disableFlags stringSlice
 		showHelp     bool
+		showVersion  bool
 		listRules    bool
 		configPath   string
 		noConfig     bool
@@ -72,6 +74,8 @@ func run() int {
 	flag.Var(&disableFlags, "disable", "Rule to disable")
 	flag.BoolVar(&showHelp, "help", false, "Show help")
 	flag.BoolVar(&showHelp, "h", false, "Show help (shorthand)")
+	flag.BoolVar(&showVersion, "version", false, "Show version")
+	flag.BoolVar(&showVersion, "v", false, "Show version (shorthand)")
 	flag.BoolVar(&listRules, "list-rules", false, "List available rules")
 	flag.StringVar(&configPath, "config", "", "Path to config file")
 	flag.BoolVar(&noConfig, "no-config", false, "Disable config file loading")
@@ -82,6 +86,11 @@ func run() int {
 
 	if showHelp {
 		usage()
+		return 0
+	}
+
+	if showVersion {
+		fmt.Println(getVersion())
 		return 0
 	}
 
@@ -272,6 +281,7 @@ Options:
   --no-config       Disable config file loading
   --print-config    Print resolved configuration and exit
   --list-rules      List available rules
+  -v, --version     Show version
   -h, --help        Show this help
 
 Config files:
@@ -293,4 +303,11 @@ func printRules() {
 	for _, rule := range registry.All() {
 		fmt.Printf("  %-30s %s\n", rule.Name(), rule.Description())
 	}
+}
+
+func getVersion() string {
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" {
+		return info.Main.Version
+	}
+	return "dev"
 }

@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/jschaf/go-html-validate/rules"
+	"github.com/STR-Consulting/go-html-validate/rules"
 )
 
 // Text outputs human-readable lint results.

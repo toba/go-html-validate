@@ -3,7 +3,7 @@ package linter_test
 import (
 	"testing"
 
-	"github.com/jschaf/go-html-validate/rules"
+	"github.com/STR-Consulting/go-html-validate/rules"
 )
 
 // hasRule returns true if the results contain a finding from the given rule.

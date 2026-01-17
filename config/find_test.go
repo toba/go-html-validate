@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jschaf/go-html-validate/config"
+	"github.com/STR-Consulting/go-html-validate/config"
 )
 
 func TestFindConfigFile(t *testing.T) {

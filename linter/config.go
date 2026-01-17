@@ -3,7 +3,7 @@ package linter
 import (
 	"slices"
 
-	"github.com/jschaf/go-html-validate/rules"
+	"github.com/STR-Consulting/go-html-validate/rules"
 )
 
 // Config holds linter configuration options.

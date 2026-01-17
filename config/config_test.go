@@ -6,8 +6,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/jschaf/go-html-validate/config"
-	"github.com/jschaf/go-html-validate/rules"
+	"github.com/STR-Consulting/go-html-validate/config"
+	"github.com/STR-Consulting/go-html-validate/rules"
 )
 
 func TestLoadFile(t *testing.T) {

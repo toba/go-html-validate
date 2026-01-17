@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/jschaf/go-html-validate/linter"
-	"github.com/jschaf/go-html-validate/rules"
+	"github.com/STR-Consulting/go-html-validate/linter"
+	"github.com/STR-Consulting/go-html-validate/rules"
 )
 
 // ConfigFileName is the name of the configuration file.

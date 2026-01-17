@@ -3,8 +3,8 @@ package linter_test
 import (
 	"testing"
 
-	"github.com/jschaf/go-html-validate/linter"
-	"github.com/jschaf/go-html-validate/rules"
+	"github.com/STR-Consulting/go-html-validate/linter"
+	"github.com/STR-Consulting/go-html-validate/rules"
 )
 
 func TestLintContent_FormSubmit(t *testing.T) {

@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(/tmp/htmlint:*)"
+      "Bash(/tmp/htmlint:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(/Users/jason/Developer/pacer/go-html-validate/go-html-validate:*)"
     ]
   }
 }

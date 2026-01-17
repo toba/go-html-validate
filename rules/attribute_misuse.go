@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/jschaf/go-html-validate/parser"
+	"github.com/STR-Consulting/go-html-validate/parser"
 	"golang.org/x/net/html"
 )
 
