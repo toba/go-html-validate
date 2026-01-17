@@ -9,7 +9,14 @@ import (
 )
 
 // AttributeMisuse checks that attributes are used on correct elements.
-type AttributeMisuse struct{}
+type AttributeMisuse struct {
+	htmxEnabled bool
+}
+
+// Configure implements HTMXConfigurable.
+func (r *AttributeMisuse) Configure(htmxEnabled bool, _ string) {
+	r.htmxEnabled = htmxEnabled
+}
 
 // Name returns the rule identifier.
 func (r *AttributeMisuse) Name() string { return RuleAttributeMisuse }
@@ -145,6 +152,11 @@ func (r *AttributeMisuse) Check(doc *parser.Document) []Result {
 
 			// Skip data-* and aria-* attributes (always valid)
 			if strings.HasPrefix(attrName, "data-") || strings.HasPrefix(attrName, "aria-") {
+				continue
+			}
+
+			// Skip hx-* attributes when htmx is enabled (handled by htmx-attributes rule)
+			if r.htmxEnabled && strings.HasPrefix(attrName, "hx-") {
 				continue
 			}
 

@@ -104,6 +104,7 @@ const (
 	RuleClassPattern                = "class-pattern"
 	RuleIDPattern                   = "id-pattern"
 	RuleNamePattern                 = "name-pattern"
+	RuleHTMXAttributes              = "htmx-attributes"
 )
 
 // Result represents a single lint finding.
@@ -231,6 +232,8 @@ func NewRegistry() *Registry {
 			&ClassPattern{},
 			&IDPattern{},
 			&NamePattern{},
+			// htmx rules
+			&HTMXAttributes{},
 		},
 	}
 }
