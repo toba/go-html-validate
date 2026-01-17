@@ -1,6 +1,6 @@
 # go-html-validate
 
-Fast HTML linter written in Go. Validates HTML for accessibility, best practices, and common mistakes.
+Fast HTML linter written in Go with special handling for Go templates. Validates HTML for accessibility, best practices, and common mistakes.
 
 Implements rules from [html-validate.org](https://html-validate.org).
 
