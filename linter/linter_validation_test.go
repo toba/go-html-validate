@@ -1,6 +1,7 @@
 package linter_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/STR-Consulting/go-html-validate/linter"
@@ -445,4 +446,121 @@ func TestLintContent_NoInlineStyle(t *testing.T) {
 			checkRule(t, results, rules.RuleNoInlineStyle, tt.wantRule)
 		})
 	}
+}
+
+func TestLintContent_InputAttributes_HTMX(t *testing.T) {
+	tests := []struct {
+		name        string
+		html        string
+		htmxEnabled bool
+		htmxVersion string
+		wantRule    string
+		wantMessage string
+	}{
+		{
+			name:        "htmx attr without config warns",
+			html:        `<input type="text" hx-get="/api">`,
+			htmxEnabled: false,
+			wantRule:    rules.RuleInputAttributes,
+			wantMessage: "htmx attribute 'hx-get' used but htmx not enabled",
+		},
+		{
+			name:        "htmx attr with config enabled passes",
+			html:        `<input type="text" hx-get="/api">`,
+			htmxEnabled: true,
+			htmxVersion: "2",
+		},
+		{
+			name:        "htmx v4-only attr with v2 config warns",
+			html:        `<input type="text" hx-optimistic>`,
+			htmxEnabled: true,
+			htmxVersion: "2",
+			wantRule:    rules.RuleInputAttributes,
+			wantMessage: "only available in htmx 4",
+		},
+		{
+			name:        "htmx v4-only attr with v4 config passes",
+			html:        `<input type="text" hx-optimistic>`,
+			htmxEnabled: true,
+			htmxVersion: "4",
+		},
+		{
+			name:        "htmx deprecated attr with v4 config warns",
+			html:        `<input type="text" hx-vars="foo:bar">`,
+			htmxEnabled: true,
+			htmxVersion: "4",
+			wantRule:    rules.RuleInputAttributes,
+			wantMessage: "deprecated in htmx 4",
+		},
+		{
+			name:        "htmx deprecated attr with v2 config passes",
+			html:        `<input type="text" hx-vars="foo:bar">`,
+			htmxEnabled: true,
+			htmxVersion: "2",
+		},
+		{
+			name:        "hx-on event handler passes",
+			html:        `<input type="text" hx-on:click="alert()">`,
+			htmxEnabled: true,
+			htmxVersion: "2",
+		},
+		{
+			name:        "multiple htmx attrs with config enabled passes",
+			html:        `<input type="text" hx-get="/api" hx-trigger="change" hx-target="#result">`,
+			htmxEnabled: true,
+			htmxVersion: "2",
+		},
+		{
+			name:        "unknown htmx attr warns",
+			html:        `<input type="text" hx-invalid-attr>`,
+			htmxEnabled: true,
+			htmxVersion: "2",
+			wantRule:    rules.RuleInputAttributes,
+			wantMessage: "unknown htmx attribute",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := linter.DefaultConfig()
+			cfg.Frameworks.HTMX = tt.htmxEnabled
+			cfg.Frameworks.HTMXVersion = tt.htmxVersion
+			l := linter.New(cfg)
+
+			results, err := l.LintContent("test.html", []byte(tt.html))
+			if err != nil {
+				t.Fatalf("LintContent() error = %v", err)
+			}
+
+			if tt.wantRule == "" {
+				// Should have no input-attributes violations
+				for _, r := range results {
+					if r.Rule == rules.RuleInputAttributes {
+						t.Errorf("expected no %s rule, but got: %s", rules.RuleInputAttributes, r.Message)
+					}
+				}
+				return
+			}
+
+			// Should have the expected violation
+			found := false
+			for _, r := range results {
+				if r.Rule == tt.wantRule {
+					found = true
+					if tt.wantMessage != "" && !messageContains(r.Message, tt.wantMessage) {
+						t.Errorf("expected message containing %q, got %q", tt.wantMessage, r.Message)
+					}
+					break
+				}
+			}
+			if !found {
+				t.Errorf("expected rule %q in results, got %v", tt.wantRule, results)
+			}
+		})
+	}
+}
+
+// messageContains checks if message contains the expected substring.
+func messageContains(message, expected string) bool {
+	return strings.Contains(message, expected)
 }

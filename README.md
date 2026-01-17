@@ -74,6 +74,32 @@ The linter searches for `.htmlvalidate.json` in the target directory and parent 
 - `"warn"` or `1` - Warning
 - `"off"` or `0` - Disabled
 
+### Framework Support
+
+#### htmx
+
+Enable htmx attribute validation:
+
+```json
+{
+  "frameworks": {
+    "htmx": true,
+    "htmx-version": "2"
+  }
+}
+```
+
+| Option | Values | Description |
+|--------|--------|-------------|
+| `htmx` | `true`/`false` | Enable htmx attribute support (default: `false`) |
+| `htmx-version` | `"2"`, `"4"` | htmx version to validate against (default: `"2"`) |
+
+When `htmx` is enabled:
+- htmx attributes (`hx-get`, `hx-post`, `hx-target`, etc.) are allowed on input elements
+- Attributes are validated against the specified version
+- Version `"2"`: Warns on htmx 4-only attributes (`hx-optimistic`, `hx-preload`, etc.)
+- Version `"4"`: Warns on deprecated attributes (`hx-vars`, `hx-disinherit`, etc.)
+
 ### Built-in Presets
 
 | Preset | Description |

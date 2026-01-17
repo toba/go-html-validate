@@ -126,6 +126,11 @@ type Rule interface {
 	Check(doc *parser.Document) []Result
 }
 
+// HTMXConfigurable is implemented by rules that need htmx configuration.
+type HTMXConfigurable interface {
+	Configure(htmxEnabled bool, htmxVersion string)
+}
+
 // Registry holds all available rules.
 type Registry struct {
 	rules []Rule

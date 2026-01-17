@@ -6,6 +6,15 @@ import (
 	"github.com/STR-Consulting/go-html-validate/rules"
 )
 
+// FrameworkConfig configures framework-specific attribute handling.
+type FrameworkConfig struct {
+	// HTMX enables htmx attribute validation.
+	HTMX bool
+	// HTMXVersion specifies which htmx version to validate against ("2" or "4").
+	// Defaults to "2" when HTMX is enabled.
+	HTMXVersion string
+}
+
 // Config holds linter configuration options.
 type Config struct {
 	// EnabledRules lists rules to enable (empty means all)
@@ -20,6 +29,8 @@ type Config struct {
 	IgnorePatterns []string
 	// ConfigPath is the path to the loaded config file (for debugging)
 	ConfigPath string
+	// Frameworks configures framework-specific attribute handling.
+	Frameworks FrameworkConfig
 }
 
 // DefaultConfig returns a configuration with all rules enabled.

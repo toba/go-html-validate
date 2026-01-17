@@ -16,6 +16,15 @@ import (
 // ConfigFileName is the name of the configuration file.
 const ConfigFileName = ".htmlvalidate.json"
 
+// FrameworkConfig configures framework-specific attribute handling.
+type FrameworkConfig struct {
+	// HTMX enables htmx attribute validation.
+	HTMX bool `json:"htmx"`
+	// HTMXVersion specifies which htmx version to validate against ("2" or "4").
+	// Defaults to "2" when HTMX is enabled.
+	HTMXVersion string `json:"htmx-version"`
+}
+
 // FileConfig represents the JSON structure of .htmlvalidate.json.
 type FileConfig struct {
 	// Root stops parent directory searching when true.
@@ -24,6 +33,8 @@ type FileConfig struct {
 	Extends StringOrStrings `json:"extends"`
 	// Rules configures individual rule severity.
 	Rules map[string]RuleConfig `json:"rules"`
+	// Frameworks configures framework-specific attribute handling.
+	Frameworks FrameworkConfig `json:"frameworks"`
 }
 
 // StringOrStrings handles JSON that can be either a string or array of strings.
@@ -248,6 +259,15 @@ func merge(base, overlay *FileConfig) *FileConfig {
 		result.Rules[name] = cfg
 	}
 
+	// Merge frameworks config (overlay takes precedence)
+	result.Frameworks = base.Frameworks
+	if overlay.Frameworks.HTMX {
+		result.Frameworks.HTMX = true
+	}
+	if overlay.Frameworks.HTMXVersion != "" {
+		result.Frameworks.HTMXVersion = overlay.Frameworks.HTMXVersion
+	}
+
 	return result
 }
 
@@ -269,6 +289,12 @@ func ToLinterConfig(fc *FileConfig, configPath string) *linter.Config {
 		case "warn", "warning", "1":
 			cfg.RuleSeverity[name] = rules.Warning
 		}
+	}
+
+	// Copy frameworks config
+	cfg.Frameworks = linter.FrameworkConfig{
+		HTMX:        fc.Frameworks.HTMX,
+		HTMXVersion: fc.Frameworks.HTMXVersion,
 	}
 
 	return cfg

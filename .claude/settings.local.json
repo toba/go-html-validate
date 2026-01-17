@@ -16,7 +16,10 @@
       "Bash(gh run watch:*)",
       "Bash(gh release view:*)",
       "Bash(htmlint --version:*)",
-      "Bash(NEW_VERSION=v0.4.1 .claude/skills/commit/commit.sh:*)"
+      "Bash(NEW_VERSION=v0.4.1 .claude/skills/commit/commit.sh:*)",
+      "mcp__acp__Bash",
+      "mcp__acp__Edit",
+      "mcp__acp__Write"
     ]
   }
 }

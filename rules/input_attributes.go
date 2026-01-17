@@ -7,8 +7,24 @@ import (
 	"golang.org/x/net/html"
 )
 
+// InputAttributesConfig holds htmx configuration for the InputAttributes rule.
+type InputAttributesConfig struct {
+	// HTMXEnabled allows htmx attributes on input elements.
+	HTMXEnabled bool
+	// HTMXVersion specifies which htmx version to validate ("2" or "4").
+	HTMXVersion string
+}
+
 // InputAttributes checks that input elements only have type-appropriate attributes.
-type InputAttributes struct{}
+type InputAttributes struct {
+	config InputAttributesConfig
+}
+
+// Configure sets the htmx configuration for this rule.
+func (r *InputAttributes) Configure(htmxEnabled bool, htmxVersion string) {
+	r.config.HTMXEnabled = htmxEnabled
+	r.config.HTMXVersion = htmxVersion
+}
 
 // Name returns the rule identifier.
 func (r *InputAttributes) Name() string { return RuleInputAttributes }
@@ -60,6 +76,60 @@ func (r *InputAttributes) Check(doc *parser.Document) []Result {
 
 			// Skip event handlers
 			if strings.HasPrefix(attrName, "on") {
+				continue
+			}
+
+			// Handle htmx attributes
+			if IsHTMXAttribute(attrName) {
+				if !r.config.HTMXEnabled {
+					results = append(results, Result{
+						Rule:     RuleInputAttributes,
+						Message:  "htmx attribute '" + attrName + "' used but htmx not enabled in config",
+						Filename: doc.Filename,
+						Line:     n.Line,
+						Col:      n.Col,
+						Severity: Warning,
+					})
+					continue
+				}
+
+				// Validate against htmx version
+				version := r.config.HTMXVersion
+				if version == "" {
+					version = "2"
+				}
+				valid, deprecated, v4Only := ValidateHTMXAttribute(attrName, version)
+
+				if !valid {
+					if v4Only {
+						results = append(results, Result{
+							Rule:     RuleInputAttributes,
+							Message:  "htmx attribute '" + attrName + "' is only available in htmx 4",
+							Filename: doc.Filename,
+							Line:     n.Line,
+							Col:      n.Col,
+							Severity: Warning,
+						})
+					} else {
+						results = append(results, Result{
+							Rule:     RuleInputAttributes,
+							Message:  "unknown htmx attribute '" + attrName + "'",
+							Filename: doc.Filename,
+							Line:     n.Line,
+							Col:      n.Col,
+							Severity: Warning,
+						})
+					}
+				} else if deprecated {
+					results = append(results, Result{
+						Rule:     RuleInputAttributes,
+						Message:  "htmx attribute '" + attrName + "' is deprecated in htmx 4",
+						Filename: doc.Filename,
+						Line:     n.Line,
+						Col:      n.Col,
+						Severity: Warning,
+					})
+				}
 				continue
 			}
 

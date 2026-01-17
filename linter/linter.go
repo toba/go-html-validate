@@ -33,6 +33,10 @@ func New(cfg *Config) *Linter {
 
 	for _, rule := range registry.All() {
 		if cfg.IsRuleEnabled(rule.Name()) {
+			// Configure htmx-aware rules
+			if htmxRule, ok := rule.(rules.HTMXConfigurable); ok {
+				htmxRule.Configure(cfg.Frameworks.HTMX, cfg.Frameworks.HTMXVersion)
+			}
 			enabledRules = append(enabledRules, rule)
 		}
 	}
