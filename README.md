@@ -7,7 +7,7 @@ Implements rules from [html-validate.org](https://html-validate.org).
 ## Installation
 
 ```bash
-go install github.com/pacerrev/go-html-validate@latest
+go install github.com/STR-Consulting/go-html-validate@latest
 ```
 
 ## Usage
