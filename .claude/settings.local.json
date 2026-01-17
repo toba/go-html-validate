@@ -21,7 +21,8 @@
       "mcp__acp__Edit",
       "mcp__acp__Write",
       "WebSearch",
-      "WebFetch(domain:zed.dev)"
+      "WebFetch(domain:zed.dev)",
+      "Bash(.claude/skills/commit/commit.sh:*)"
     ]
   }
 }

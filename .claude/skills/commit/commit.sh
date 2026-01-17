@@ -39,27 +39,40 @@ echo "==> Creating commit..."
 git commit -m "$COMMIT_MSG"
 git status
 
-# Version tagging
+# Version tagging and release (only if PUSH=true)
 CURRENT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
 if [ -n "$CURRENT_TAG" ]; then
     echo ""
     echo "==> Current version: $CURRENT_TAG"
-    echo "==> Checking if version bump is needed..."
 
-    # If NEW_VERSION is set by caller, create and push tag
-    # GoReleaser workflow will create the GitHub release automatically
-    if [ -n "$NEW_VERSION" ]; then
-        echo "==> Creating tag $NEW_VERSION..."
-        git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+    if [ "$PUSH" = "true" ]; then
+        echo "==> Pushing commits..."
+        git push
 
-        echo "==> Pushing tag (GoReleaser will create release)..."
-        git push origin "$NEW_VERSION"
-        echo "==> Tag $NEW_VERSION pushed, GoReleaser workflow will create release"
+        # If NEW_VERSION is set, create and push tag
+        # GoReleaser workflow will create the GitHub release automatically
+        if [ -n "$NEW_VERSION" ]; then
+            echo "==> Creating tag $NEW_VERSION..."
+            git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+
+            echo "==> Pushing tag (GoReleaser will create release)..."
+            git push origin "$NEW_VERSION"
+            echo "==> Tag $NEW_VERSION pushed, GoReleaser workflow will create release"
+        else
+            echo "==> No NEW_VERSION set, skipping release"
+        fi
     else
-        echo "==> No NEW_VERSION set, skipping tag"
+        echo "==> Commit is local only (use PUSH=true to push and release)"
+        if [ -n "$NEW_VERSION" ]; then
+            echo "==> NEW_VERSION=$NEW_VERSION will be used when pushed"
+        fi
     fi
 else
     echo "==> No existing tags, skipping version bump"
+    if [ "$PUSH" = "true" ]; then
+        echo "==> Pushing commits..."
+        git push
+    fi
 fi
 
 # Sync to ClickUp

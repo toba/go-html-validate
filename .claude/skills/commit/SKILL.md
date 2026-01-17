@@ -18,14 +18,17 @@ description: Stage all changes and commit with a descriptive message. Use when t
 
 3. Run commit script with subject and description:
    ```bash
-   # Without version bump:
+   # Local commit only (no push, no release):
    .claude/skills/commit/commit.sh "subject line" "description body"
 
-   # With version bump:
-   NEW_VERSION=vX.Y.Z .claude/skills/commit/commit.sh "subject line" "description body"
+   # Push and release with version bump:
+   PUSH=true NEW_VERSION=vX.Y.Z .claude/skills/commit/commit.sh "subject line" "description body"
+
+   # Push without version bump:
+   PUSH=true .claude/skills/commit/commit.sh "subject line" "description body"
    ```
 
    - **Subject**: Lowercase, imperative mood (e.g., "add feature" not "Added feature")
    - **Description**: Explain the "why" and context. What problem does this solve? What approach was taken? Include relevant details about the implementation.
 
-The script handles: lint, test, stage, commit, tag, push tag, GitHub release, and beanup sync.
+The script handles: lint, test, stage, commit, and beanup sync. Push and release only happen when `PUSH=true`.
