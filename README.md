@@ -58,6 +58,7 @@ Create `.htmlvalidate.json` in your project root:
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/STR-Consulting/go-html-validate/main/schemas/htmlint.schema.json",
   "extends": ["html-validate:recommended"],
   "rules": {
     "no-inline-style": "warn",
@@ -94,11 +95,25 @@ Enable htmx attribute validation:
 | `htmx` | `true`/`false` | Enable htmx attribute support (default: `false`) |
 | `htmx-version` | `"2"`, `"4"` | htmx version to validate against (default: `"2"`) |
 
-When `htmx` is enabled:
-- htmx attributes (`hx-get`, `hx-post`, `hx-target`, etc.) are allowed on input elements
-- Attributes are validated against the specified version
-- Version `"2"`: Warns on htmx 4-only attributes (`hx-optimistic`, `hx-preload`, etc.)
-- Version `"4"`: Warns on deprecated attributes (`hx-vars`, `hx-disinherit`, etc.)
+When `htmx` is enabled, htmx attributes are recognized as valid and won't trigger `attribute-misuse` errors.
+
+**Supported attributes (htmx 2.x):**
+- Request: `hx-get`, `hx-post`, `hx-put`, `hx-patch`, `hx-delete`
+- Targeting: `hx-target`, `hx-swap`, `hx-swap-oob`, `hx-select`, `hx-select-oob`
+- Behavior: `hx-trigger`, `hx-sync`, `hx-boost`, `hx-confirm`, `hx-prompt`
+- URLs: `hx-push-url`, `hx-replace-url`
+- Data: `hx-vals`, `hx-headers`, `hx-params`, `hx-include`, `hx-encoding`
+- Inheritance: `hx-disinherit`, `hx-inherit`
+- Other: `hx-ext`, `hx-indicator`, `hx-preserve`, `hx-validate`, `hx-disable`, `hx-disabled-elt`, `hx-history`, `hx-history-elt`, `hx-request`
+- Events: `hx-on:*` patterns (e.g., `hx-on:click`, `hx-on:htmx:after-request`)
+
+**htmx 4-only attributes** (warn when `htmx-version` is `"2"`):
+- `hx-action`, `hx-config`, `hx-ignore`, `hx-method`, `hx-optimistic`, `hx-preload`
+- `hx-status:*` patterns (e.g., `hx-status:404`)
+- `:inherited` suffix (e.g., `hx-boost:inherited`)
+
+**Deprecated in htmx 4** (warn when `htmx-version` is `"4"`):
+- `hx-disabled-elt`, `hx-disinherit`, `hx-history-elt`, `hx-request`, `hx-vars`
 
 ### Built-in Presets
 

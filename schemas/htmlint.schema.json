@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/STR-Consulting/go-html-validate/main/schemas/htmlint.schema.json",
+  "title": "htmlint configuration",
+  "description": "Configuration schema for htmlint (.htmlvalidate.json)",
+  "type": "object",
+  "properties": {
+    "root": {
+      "type": "boolean",
+      "default": false,
+      "description": "Stop searching parent directories for config files"
+    },
+    "extends": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "Presets or config files to extend",
+      "examples": ["html-validate:recommended", ["html-validate:standard", "./custom.json"]]
+    },
+    "rules": {
+      "type": "object",
+      "description": "Rule severity configuration",
+      "additionalProperties": {
+        "$ref": "#/$defs/ruleSeverity"
+      },
+      "properties": {
+        "area-alt": { "$ref": "#/$defs/ruleSeverity" },
+        "aria-hidden-body": { "$ref": "#/$defs/ruleSeverity" },
+        "aria-label-misuse": { "$ref": "#/$defs/ruleSeverity" },
+        "attribute-allowed-values": { "$ref": "#/$defs/ruleSeverity" },
+        "attribute-misuse": { "$ref": "#/$defs/ruleSeverity" },
+        "button-name": { "$ref": "#/$defs/ruleSeverity" },
+        "button-type": { "$ref": "#/$defs/ruleSeverity" },
+        "class-pattern": { "$ref": "#/$defs/ruleSeverity" },
+        "deprecated": { "$ref": "#/$defs/ruleSeverity" },
+        "duplicate-id": { "$ref": "#/$defs/ruleSeverity" },
+        "element-name": { "$ref": "#/$defs/ruleSeverity" },
+        "element-permitted-content": { "$ref": "#/$defs/ruleSeverity" },
+        "element-permitted-occurrences": { "$ref": "#/$defs/ruleSeverity" },
+        "element-permitted-order": { "$ref": "#/$defs/ruleSeverity" },
+        "element-permitted-parent": { "$ref": "#/$defs/ruleSeverity" },
+        "element-required-ancestor": { "$ref": "#/$defs/ruleSeverity" },
+        "element-required-attributes": { "$ref": "#/$defs/ruleSeverity" },
+        "element-required-content": { "$ref": "#/$defs/ruleSeverity" },
+        "empty-title": { "$ref": "#/$defs/ruleSeverity" },
+        "form-dup-name": { "$ref": "#/$defs/ruleSeverity" },
+        "form-submit": { "$ref": "#/$defs/ruleSeverity" },
+        "heading-content": { "$ref": "#/$defs/ruleSeverity" },
+        "heading-level": { "$ref": "#/$defs/ruleSeverity" },
+        "hidden-focusable": { "$ref": "#/$defs/ruleSeverity" },
+        "id-pattern": { "$ref": "#/$defs/ruleSeverity" },
+        "img-alt": { "$ref": "#/$defs/ruleSeverity" },
+        "input-attributes": { "$ref": "#/$defs/ruleSeverity" },
+        "input-label": { "$ref": "#/$defs/ruleSeverity" },
+        "link-name": { "$ref": "#/$defs/ruleSeverity" },
+        "long-title": { "$ref": "#/$defs/ruleSeverity" },
+        "allowed-links": { "$ref": "#/$defs/ruleSeverity" },
+        "map-dup-name": { "$ref": "#/$defs/ruleSeverity" },
+        "map-id-name": { "$ref": "#/$defs/ruleSeverity" },
+        "meta-refresh": { "$ref": "#/$defs/ruleSeverity" },
+        "multiple-labeled-controls": { "$ref": "#/$defs/ruleSeverity" },
+        "name-pattern": { "$ref": "#/$defs/ruleSeverity" },
+        "no-abstract-role": { "$ref": "#/$defs/ruleSeverity" },
+        "no-autoplay": { "$ref": "#/$defs/ruleSeverity" },
+        "no-conditional-comment": { "$ref": "#/$defs/ruleSeverity" },
+        "no-deprecated-attr": { "$ref": "#/$defs/ruleSeverity" },
+        "no-dup-attr": { "$ref": "#/$defs/ruleSeverity" },
+        "no-dup-class": { "$ref": "#/$defs/ruleSeverity" },
+        "no-implicit-input-type": { "$ref": "#/$defs/ruleSeverity" },
+        "no-inline-style": { "$ref": "#/$defs/ruleSeverity" },
+        "no-missing-references": { "$ref": "#/$defs/ruleSeverity" },
+        "no-multiple-main": { "$ref": "#/$defs/ruleSeverity" },
+        "no-redundant-aria-label": { "$ref": "#/$defs/ruleSeverity" },
+        "no-redundant-for": { "$ref": "#/$defs/ruleSeverity" },
+        "no-redundant-role": { "$ref": "#/$defs/ruleSeverity" },
+        "no-style-tag": { "$ref": "#/$defs/ruleSeverity" },
+        "no-utf8-bom": { "$ref": "#/$defs/ruleSeverity" },
+        "prefer-aria": { "$ref": "#/$defs/ruleSeverity" },
+        "prefer-button": { "$ref": "#/$defs/ruleSeverity" },
+        "prefer-native-element": { "$ref": "#/$defs/ruleSeverity" },
+        "prefer-semantic": { "$ref": "#/$defs/ruleSeverity" },
+        "prefer-tbody": { "$ref": "#/$defs/ruleSeverity" },
+        "require-csp-nonce": { "$ref": "#/$defs/ruleSeverity" },
+        "require-lang": { "$ref": "#/$defs/ruleSeverity" },
+        "require-sri": { "$ref": "#/$defs/ruleSeverity" },
+        "script-element": { "$ref": "#/$defs/ruleSeverity" },
+        "script-type": { "$ref": "#/$defs/ruleSeverity" },
+        "svg-focusable": { "$ref": "#/$defs/ruleSeverity" },
+        "tabindex-no-positive": { "$ref": "#/$defs/ruleSeverity" },
+        "tel-non-breaking": { "$ref": "#/$defs/ruleSeverity" },
+        "unique-landmark": { "$ref": "#/$defs/ruleSeverity" },
+        "valid-autocomplete": { "$ref": "#/$defs/ruleSeverity" },
+        "valid-id": { "$ref": "#/$defs/ruleSeverity" },
+        "void-content": { "$ref": "#/$defs/ruleSeverity" },
+        "wcag/h36": { "$ref": "#/$defs/ruleSeverity" },
+        "wcag/h63": { "$ref": "#/$defs/ruleSeverity" },
+        "wcag/h67": { "$ref": "#/$defs/ruleSeverity" },
+        "wcag/h71": { "$ref": "#/$defs/ruleSeverity" }
+      }
+    },
+    "frameworks": {
+      "type": "object",
+      "description": "Framework-specific configuration",
+      "properties": {
+        "htmx": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable htmx attribute validation"
+        },
+        "htmx-version": {
+          "type": "string",
+          "enum": ["2", "4"],
+          "default": "2",
+          "description": "htmx version to validate against"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ruleSeverity": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["error", "warn", "off"]
+        },
+        {
+          "type": "integer",
+          "enum": [0, 1, 2],
+          "description": "0=off, 1=warn, 2=error"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": [
+            {
+              "oneOf": [
+                { "type": "string", "enum": ["error", "warn", "off"] },
+                { "type": "integer", "enum": [0, 1, 2] }
+              ]
+            },
+            {
+              "type": "object",
+              "description": "Rule-specific options"
+            }
+          ]
+        }
+      ],
+      "description": "Rule severity: 'error'|'warn'|'off' or 2|1|0, optionally as [severity, options]"
+    }
+  }
+}

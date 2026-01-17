@@ -19,7 +19,9 @@
       "Bash(NEW_VERSION=v0.4.1 .claude/skills/commit/commit.sh:*)",
       "mcp__acp__Bash",
       "mcp__acp__Edit",
-      "mcp__acp__Write"
+      "mcp__acp__Write",
+      "WebSearch",
+      "WebFetch(domain:zed.dev)"
     ]
   }
 }

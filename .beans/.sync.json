@@ -1,6 +1,12 @@
 {
   "version": 1,
   "beans": {
+    "ghv-kzdw": {
+      "clickup": {
+        "task_id": "868h4hara",
+        "synced_at": "2026-01-17T23:12:39.822968Z"
+      }
+    },
     "go-html-validate-0y8v": {
       "clickup": {
         "task_id": "868h4h8ak",
