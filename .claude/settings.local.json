@@ -3,7 +3,9 @@
     "allow": [
       "Bash(/tmp/htmlint:*)",
       "WebFetch(domain:github.com)",
-      "Bash(/Users/jason/Developer/pacer/go-html-validate/go-html-validate:*)"
+      "Bash(/Users/jason/Developer/pacer/go-html-validate/go-html-validate:*)",
+      "Bash(chmod:*)",
+      "Bash(NEW_VERSION=v0.3.0 /Users/jason/Developer/pacer/go-html-validate/.claude/skills/commit/commit.sh:*)"
     ]
   }
 }
