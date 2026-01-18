@@ -1,9 +1,12 @@
 ---
 name: commit
 description: Stage all changes and commit with a descriptive message. Use when the user asks to commit, save changes, or says "/commit".
+args: "[push]"
 ---
 
 ## Workflow
+
+**IMPORTANT**: Only use `PUSH=true` when the user explicitly says "/commit push" or asks to push. Plain "/commit" should NEVER push.
 
 1. Review changes to determine commit message and version bump:
    ```bash

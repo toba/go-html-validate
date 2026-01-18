@@ -707,3 +707,215 @@ func TestLintContent_HTMXValsHeaders(t *testing.T) {
 
 	runHTMXTests(t, l, tests)
 }
+
+func TestLintContent_HTMXInclude(t *testing.T) {
+	tests := []htmxTestCase{
+		// Valid hx-include cases
+		{
+			name: "valid id selector",
+			html: `<div hx-post="/api" hx-include="#myform">content</div>`,
+		},
+		{
+			name: "valid class selector",
+			html: `<div hx-post="/api" hx-include=".inputs">content</div>`,
+		},
+		{
+			name: "valid element selector",
+			html: `<div hx-post="/api" hx-include="input">content</div>`,
+		},
+		{
+			name: "valid attribute selector",
+			html: `<div hx-post="/api" hx-include="[name]">content</div>`,
+		},
+		{
+			name: "valid attribute value selector",
+			html: `<div hx-post="/api" hx-include='[name="email"]'>content</div>`,
+		},
+		{
+			name: "valid this keyword",
+			html: `<div hx-post="/api" hx-include="this">content</div>`,
+		},
+		{
+			name: "valid closest keyword",
+			html: `<div hx-post="/api" hx-include="closest form">content</div>`,
+		},
+		{
+			name: "valid find keyword",
+			html: `<div hx-post="/api" hx-include="find input">content</div>`,
+		},
+		{
+			name: "valid next keyword",
+			html: `<div hx-post="/api" hx-include="next .sibling">content</div>`,
+		},
+		{
+			name: "valid multiple selectors",
+			html: `<div hx-post="/api" hx-include="#form1, #form2">content</div>`,
+		},
+		{
+			name: "valid descendant combinator",
+			html: `<div hx-post="/api" hx-include="form input">content</div>`,
+		},
+		{
+			name: "valid child combinator",
+			html: `<div hx-post="/api" hx-include="form > input">content</div>`,
+		},
+		{
+			name: "valid universal selector",
+			html: `<div hx-post="/api" hx-include="*">content</div>`,
+		},
+		{
+			name: "valid pseudo-class",
+			html: `<div hx-post="/api" hx-include=":not(.hidden)">content</div>`,
+		},
+		{
+			name: "empty hx-include",
+			html: `<div hx-post="/api" hx-include="">content</div>`,
+		},
+		{
+			name: "valid template expression",
+			html: `<div hx-post="/api" hx-include="{{ .Selector }}">content</div>`,
+		},
+		// Invalid hx-include cases
+		{
+			name:       "unclosed bracket",
+			html:       `<div hx-post="/api" hx-include="[name">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "unclosed bracket",
+			severity:   rules.Error,
+		},
+		{
+			name:       "unbalanced brackets",
+			html:       `<div hx-post="/api" hx-include="[name]]">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "unbalanced brackets",
+			severity:   rules.Error,
+		},
+		{
+			name:       "empty attribute selector",
+			html:       `<div hx-post="/api" hx-include="input[]">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "empty attribute selector",
+			severity:   rules.Error,
+		},
+		{
+			name:       "invalid start character",
+			html:       `<div hx-post="/api" hx-include="@invalid">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "invalid character",
+			severity:   rules.Error,
+		},
+		{
+			name:       "ends with combinator",
+			html:       `<div hx-post="/api" hx-include="form >">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "ends with combinator",
+			severity:   rules.Error,
+		},
+	}
+
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "2"
+	l := linter.New(cfg)
+
+	runHTMXTests(t, l, tests)
+}
+
+func TestLintContent_HTMXStatusV4(t *testing.T) {
+	tests := []htmxTestCase{
+		// Valid hx-status patterns (htmx 4)
+		{
+			name: "valid exact status 404",
+			html: `<div hx-get="/api" hx-status:404="none">content</div>`,
+		},
+		{
+			name: "valid exact status 200",
+			html: `<div hx-get="/api" hx-status:200="innerHTML">content</div>`,
+		},
+		{
+			name: "valid exact status 500",
+			html: `<div hx-get="/api" hx-status:500="target:#error">content</div>`,
+		},
+		{
+			name: "valid wildcard 2xx",
+			html: `<div hx-get="/api" hx-status:2xx="innerHTML">content</div>`,
+		},
+		{
+			name: "valid wildcard 4xx",
+			html: `<div hx-get="/api" hx-status:4xx="none">content</div>`,
+		},
+		{
+			name: "valid wildcard 5xx",
+			html: `<div hx-get="/api" hx-status:5xx="target:#error">content</div>`,
+		},
+		// Invalid hx-status patterns
+		{
+			name:       "invalid status 99",
+			html:       `<div hx-get="/api" hx-status:99="none">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "not a valid HTTP status",
+			severity:   rules.Error,
+		},
+		{
+			name:       "invalid status 600",
+			html:       `<div hx-get="/api" hx-status:600="none">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "not a valid HTTP status",
+			severity:   rules.Error,
+		},
+		{
+			name:       "invalid wildcard 6xx",
+			html:       `<div hx-get="/api" hx-status:6xx="none">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "not a valid HTTP status",
+			severity:   rules.Error,
+		},
+		{
+			name:       "invalid non-numeric",
+			html:       `<div hx-get="/api" hx-status:abc="none">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "not a valid HTTP status",
+			severity:   rules.Error,
+		},
+		{
+			name:       "invalid partial wildcard",
+			html:       `<div hx-get="/api" hx-status:40x="none">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "not a valid HTTP status",
+			severity:   rules.Error,
+		},
+	}
+
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "4"
+	l := linter.New(cfg)
+
+	runHTMXTests(t, l, tests)
+}
+
+func TestLintContent_HTMXStatusV2Warning(t *testing.T) {
+	// hx-status:* should warn when using htmx v2
+	html := `<div hx-get="/api" hx-status:404="none">content</div>`
+
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "2"
+	l := linter.New(cfg)
+
+	results, err := l.LintContent("test.html", []byte(html))
+	if err != nil {
+		t.Fatalf("LintContent() error = %v", err)
+	}
+
+	found := false
+	for _, r := range results {
+		if r.Rule == rules.RuleHTMXAttributes && strings.Contains(r.Message, "only available in htmx 4") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected warning about htmx 4 only, got %v", results)
+	}
+}

@@ -222,6 +222,10 @@ func (r *HTMXAttributes) Check(doc *parser.Document) []Result {
 				validationResults = r.validateHxOn(doc.Filename, n, attr.Key)
 			case attrName == "hx-vals" || attrName == "hx-headers":
 				validationResults = r.validateJSON(doc.Filename, n, attrName, attr.Val)
+			case attrName == "hx-include":
+				validationResults = r.validateInclude(doc.Filename, n, attr.Val)
+			case strings.HasPrefix(attrName, "hx-status:") || strings.HasPrefix(attrName, "hx-status-"):
+				validationResults = r.validateHxStatus(doc.Filename, n, attr.Key)
 			}
 
 			results = append(results, validationResults...)
@@ -892,4 +896,190 @@ func simplifyJSONError(err error) string {
 	msg := err.Error()
 	msg = strings.TrimPrefix(msg, "invalid character ")
 	return msg
+}
+
+// validateInclude checks hx-include attribute values for valid CSS selector syntax.
+func (r *HTMXAttributes) validateInclude(filename string, n *parser.Node, value string) []Result {
+	if value == "" {
+		return nil // Empty is valid (inherits or uses default)
+	}
+
+	// Skip template expressions (both raw and preprocessed)
+	if strings.Contains(value, "{{") || strings.Contains(value, "TMPL") {
+		return nil
+	}
+
+	value = strings.TrimSpace(value)
+
+	// Special htmx values
+	specialPrefixes := []string{"this", "closest ", "next ", "previous ", "find "}
+	for _, prefix := range specialPrefixes {
+		if value == "this" || strings.HasPrefix(value, prefix) {
+			// If it's just the keyword, it's valid
+			if value == "this" || value == strings.TrimSuffix(prefix, " ") {
+				return nil
+			}
+			// Otherwise, extract the selector part after the keyword
+			value = strings.TrimPrefix(value, prefix)
+			value = strings.TrimSpace(value)
+			break
+		}
+	}
+
+	// Handle comma-separated selectors
+	selectors := strings.Split(value, ",")
+	for _, selector := range selectors {
+		selector = strings.TrimSpace(selector)
+		if selector == "" {
+			continue
+		}
+
+		if err := validateCSSSelector(selector); err != nil {
+			return []Result{{
+				Rule:     RuleHTMXAttributes,
+				Message:  "hx-include contains invalid CSS selector: " + err.Error(),
+				Filename: filename,
+				Line:     n.Line,
+				Col:      n.Col,
+				Severity: Error,
+			}}
+		}
+	}
+
+	return nil
+}
+
+// validateCSSSelector performs basic validation on a CSS selector.
+// Returns an error if the selector has obvious syntax issues.
+func validateCSSSelector(selector string) error {
+	if selector == "" {
+		return nil
+	}
+
+	// Check for unbalanced brackets
+	brackets := map[rune]rune{'[': ']', '(': ')'}
+	var stack []rune
+	for _, ch := range selector {
+		if closer, isOpener := brackets[ch]; isOpener {
+			stack = append(stack, closer)
+		} else if ch == ']' || ch == ')' {
+			if len(stack) == 0 || stack[len(stack)-1] != ch {
+				return errors.New("unbalanced brackets in '" + selector + "'")
+			}
+			stack = stack[:len(stack)-1]
+		}
+	}
+	if len(stack) > 0 {
+		return errors.New("unclosed bracket in '" + selector + "'")
+	}
+
+	// Check for empty selectors after combinators
+	combinators := []string{" > ", " + ", " ~ "}
+	for _, comb := range combinators {
+		if strings.HasSuffix(selector, strings.TrimSpace(comb)) {
+			return errors.New("selector ends with combinator '" + strings.TrimSpace(comb) + "'")
+		}
+		if strings.HasPrefix(selector, strings.TrimSpace(comb)) {
+			return errors.New("selector starts with combinator '" + strings.TrimSpace(comb) + "'")
+		}
+	}
+
+	// Check for invalid characters at start
+	if len(selector) > 0 {
+		first := selector[0]
+		// Valid starts: letter, #, ., *, [, :
+		validStarts := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#.*[:_-"
+		if !strings.ContainsRune(validStarts, rune(first)) {
+			return errors.New("selector starts with invalid character '" + string(first) + "'")
+		}
+	}
+
+	// Check for empty attribute selector
+	if strings.Contains(selector, "[]") {
+		return errors.New("empty attribute selector '[]'")
+	}
+
+	// Check for double combinators
+	if strings.Contains(selector, ">>") || strings.Contains(selector, "++") || strings.Contains(selector, "~~") {
+		return errors.New("invalid double combinator")
+	}
+
+	return nil
+}
+
+// validateHxStatus checks hx-status:* attribute patterns for valid HTTP status codes.
+// Valid patterns: hx-status:404, hx-status:2xx, hx-status:5xx
+func (r *HTMXAttributes) validateHxStatus(filename string, n *parser.Node, attrKey string) []Result {
+	// hx-status:* is htmx 4 only
+	if r.htmxVersion != "4" {
+		return []Result{{
+			Rule:     RuleHTMXAttributes,
+			Message:  "hx-status:* attributes are only available in htmx 4",
+			Filename: filename,
+			Line:     n.Line,
+			Col:      n.Col,
+			Severity: Warning,
+		}}
+	}
+
+	// Extract the status code part
+	var statusCode string
+	if strings.HasPrefix(attrKey, "hx-status:") {
+		statusCode = strings.TrimPrefix(attrKey, "hx-status:")
+	} else if strings.HasPrefix(attrKey, "hx-status-") {
+		statusCode = strings.TrimPrefix(attrKey, "hx-status-")
+	}
+
+	if statusCode == "" {
+		return []Result{{
+			Rule:     RuleHTMXAttributes,
+			Message:  "hx-status:* requires a status code (e.g., hx-status:404, hx-status:2xx)",
+			Filename: filename,
+			Line:     n.Line,
+			Col:      n.Col,
+			Severity: Error,
+		}}
+	}
+
+	// Validate the status code pattern
+	if err := validateHTTPStatusCode(statusCode); err != nil {
+		return []Result{{
+			Rule:     RuleHTMXAttributes,
+			Message:  "invalid hx-status pattern: " + err.Error(),
+			Filename: filename,
+			Line:     n.Line,
+			Col:      n.Col,
+			Severity: Error,
+		}}
+	}
+
+	return nil
+}
+
+// httpStatusPattern matches valid HTTP status codes (100-599) and wildcard patterns (1xx-5xx).
+var httpStatusPattern = regexp.MustCompile(`^[1-5](?:\d{2}|xx)$`)
+
+// validateHTTPStatusCode validates an HTTP status code or wildcard pattern.
+func validateHTTPStatusCode(code string) error {
+	if code == "" {
+		return errors.New("empty status code")
+	}
+
+	// Check for valid pattern
+	if !httpStatusPattern.MatchString(code) {
+		return errors.New("'" + code + "' is not a valid HTTP status code; use 3 digits (e.g., 404) or wildcard (e.g., 4xx)")
+	}
+
+	// If it's an exact code (not wildcard), check the range
+	if !strings.HasSuffix(code, "xx") {
+		codeNum, err := strconv.Atoi(code)
+		if err != nil {
+			return errors.New("'" + code + "' is not a valid number")
+		}
+		if codeNum < 100 || codeNum > 599 {
+			return errors.New("'" + code + "' is outside valid HTTP status range (100-599)")
+		}
+	}
+
+	return nil
 }

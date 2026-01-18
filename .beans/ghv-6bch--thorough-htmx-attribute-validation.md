@@ -32,12 +32,12 @@ Current state (`rules/htmx.go`, `rules/input_attributes.go`):
 - [x] Validate hx-on:* event names match known htmx events (e.g., `hx-on:htmx:after-request` vs typos)
 - [x] Warn on hx-post/hx-get on submit buttons instead of parent form (common mistake)
 - [x] Validate hx-vals/hx-headers JSON syntax
-- [ ] Check hx-include CSS selector validity
-- [ ] Validate timing values in modifiers (e.g., `delay:1s`, `throttle:500ms` - valid time formats)
+- [x] Check hx-include CSS selector validity
+- [x] Validate timing values in modifiers (e.g., `delay:1s`, `throttle:500ms` - valid time formats) *(done in Phase 1)*
 
 ### Phase 3: htmx 4 specific
 
-- [ ] Validate hx-status:* patterns for valid HTTP status codes
+- [x] Validate hx-status:* patterns for valid HTTP status codes
 - [ ] Check new htmx 4 event naming convention compliance
 - [ ] Validate :inherited suffix usage
 
