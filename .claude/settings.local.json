@@ -31,7 +31,9 @@
       "WebFetch(domain:discourse.gohugo.io)",
       "Bash(go-html-validate:*)",
       "Bash(PUSH=true NEW_VERSION=v0.9.0 .claude/skills/commit/commit.sh:*)",
-      "Bash(PUSH=true NEW_VERSION=v0.8.2 .claude/skills/commit/commit.sh:*)"
+      "Bash(PUSH=true NEW_VERSION=v0.8.2 .claude/skills/commit/commit.sh:*)",
+      "Bash(gh release:*)",
+      "Bash(PUSH=true NEW_VERSION=v0.9.1 .claude/skills/commit/commit.sh:*)"
     ]
   }
 }

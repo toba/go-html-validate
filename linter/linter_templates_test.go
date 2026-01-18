@@ -202,6 +202,16 @@ content`,
 default`,
 			wantRule: rules.RuleTemplateSyntaxValid,
 		},
+		{
+			name: "unclosed define",
+			html: `{{ define "partial" }}
+content`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+		{
+			name: "balanced define/end - no error",
+			html: `{{ define "partial" }}content{{ end }}`,
+		},
 
 		// Trim marker syntax tests
 		{

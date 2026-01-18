@@ -23,10 +23,11 @@ func (r *TemplateSyntaxValid) Check(_ *parser.Document) []Result {
 
 // controlStructures that require matching end.
 var controlStructures = map[string]bool{
-	"if":    true,
-	"range": true,
-	"with":  true,
-	"block": true,
+	"if":     true,
+	"range":  true,
+	"with":   true,
+	"block":  true,
+	"define": true,
 }
 
 // CheckRaw examines the raw template content for syntax errors.
