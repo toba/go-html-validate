@@ -71,6 +71,19 @@ func (l *Linter) LintContent(filename string, content []byte) ([]rules.Result, e
 
 	var allResults []rules.Result
 	for _, rule := range l.rules {
+		// Check if rule implements RawRule interface for pre-parse checks
+		if rawRule, ok := rule.(rules.RawRule); ok {
+			rawResults := rawRule.CheckRaw(filename, content)
+			for _, r := range rawResults {
+				if severity, ok := l.config.RuleSeverity[r.Rule]; ok {
+					r.Severity = severity
+				}
+				if r.Severity <= l.config.MinSeverity {
+					allResults = append(allResults, r)
+				}
+			}
+		}
+
 		results := rule.Check(doc)
 		for _, r := range results {
 			// Apply severity override from config

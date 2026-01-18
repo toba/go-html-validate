@@ -105,6 +105,8 @@ const (
 	RuleIDPattern                   = "id-pattern"
 	RuleNamePattern                 = "name-pattern"
 	RuleHTMXAttributes              = "htmx-attributes"
+	RuleTemplateWhitespaceTrim      = "template-whitespace-trim"
+	RuleTemplateSyntaxValid         = "template-syntax-valid"
 )
 
 // Result represents a single lint finding.
@@ -130,6 +132,13 @@ type Rule interface {
 // HTMXConfigurable is implemented by rules that need htmx configuration.
 type HTMXConfigurable interface {
 	Configure(htmxEnabled bool, htmxVersion string)
+}
+
+// RawRule is implemented by rules that need access to the raw file content
+// before template preprocessing. This allows linting template syntax itself.
+type RawRule interface {
+	Rule
+	CheckRaw(filename string, content []byte) []Result
 }
 
 // Registry holds all available rules.
@@ -234,6 +243,9 @@ func NewRegistry() *Registry {
 			&NamePattern{},
 			// htmx rules
 			&HTMXAttributes{},
+			// Template rules
+			&TemplateWhitespaceTrim{},
+			&TemplateSyntaxValid{},
 		},
 	}
 }

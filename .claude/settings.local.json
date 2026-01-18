@@ -27,7 +27,10 @@
       "WebFetch(domain:htmx.org)",
       "WebFetch(domain:v2.htmx.org)",
       "WebFetch(domain:four.htmx.org)",
-      "Bash(gofmt:*)"
+      "Bash(gofmt:*)",
+      "WebFetch(domain:discourse.gohugo.io)",
+      "Bash(go-html-validate:*)",
+      "Bash(PUSH=true NEW_VERSION=v0.9.0 .claude/skills/commit/commit.sh:*)"
     ]
   }
 }

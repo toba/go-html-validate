@@ -131,3 +131,230 @@ func TestLintContent_TemplateFragmentOrphanedElements(t *testing.T) {
 		})
 	}
 }
+
+func TestLintContent_TemplateSyntaxValid(t *testing.T) {
+	tests := []struct {
+		name     string
+		html     string
+		wantRule string
+		wantMsg  string
+	}{
+		// Balanced braces tests
+		{
+			name:     "unmatched opening brace",
+			html:     `<div>{{ if .Show </div>`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+		{
+			name:     "unmatched closing brace",
+			html:     `<div>.Show }}</div>`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+		{
+			name: "balanced braces - no error",
+			html: `<div>{{ .Title }}</div>`,
+		},
+
+		// Control structure tests
+		{
+			name: "unclosed if",
+			html: `{{ if .Show }}
+content`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+		{
+			name: "unclosed range",
+			html: `{{ range .Items }}
+<li>{{ .Name }}</li>`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+		{
+			name: "unclosed with",
+			html: `{{ with .User }}
+<span>{{ .Name }}</span>`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+		{
+			name:     "unexpected end",
+			html:     `<div>{{ end }}</div>`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+		{
+			name:     "unexpected else",
+			html:     `<div>{{ else }}</div>`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+		{
+			name: "balanced if/end - no error",
+			html: `{{ if .Show }}content{{ end }}`,
+		},
+		{
+			name: "balanced if/else/end - no error",
+			html: `{{ if .Show }}yes{{ else }}no{{ end }}`,
+		},
+		{
+			name: "nested control structures - balanced",
+			html: `{{ if .Show }}{{ range .Items }}{{ .Name }}{{ end }}{{ end }}`,
+		},
+		{
+			name: "unclosed block",
+			html: `{{ block "content" . }}
+default`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+
+		// Trim marker syntax tests
+		{
+			name:     "trim marker no space after",
+			html:     `<div>{{-if .Show }}</div>`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+		{
+			name:     "trim marker no space before",
+			html:     `<div>{{ if .Show-}}</div>`,
+			wantRule: rules.RuleTemplateSyntaxValid,
+		},
+		{
+			name: "trim markers with proper spacing - no error",
+			html: `<div>{{- if .Show -}}content{{- end -}}</div>`,
+		},
+		{
+			name: "standard trim usage - no error",
+			html: `{{ if .Show -}}
+content
+{{- end }}`,
+		},
+	}
+
+	l := linter.New(nil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results, err := l.LintContent("test.html", []byte(tt.html))
+			if err != nil {
+				t.Fatalf("LintContent() error = %v", err)
+			}
+			checkRule(t, results, rules.RuleTemplateSyntaxValid, tt.wantRule)
+		})
+	}
+}
+
+func TestLintContent_TemplateWhitespaceTrim(t *testing.T) {
+	tests := []struct {
+		name     string
+		html     string
+		wantRule string
+		wantMsg  string
+	}{
+		{
+			name: "control flow alone on line - missing trailing trim",
+			html: `<div>
+{{ if .Show }}
+content
+{{ end }}
+</div>`,
+			wantRule: rules.RuleTemplateWhitespaceTrim,
+		},
+		{
+			name: "has trailing trim marker - no warning",
+			html: `<div>
+{{ if .Show -}}
+content
+{{ end -}}
+</div>`,
+		},
+		{
+			name: "has both trim markers - no warning",
+			html: `<div>
+{{- if .Show -}}
+content
+{{- end -}}
+</div>`,
+		},
+		{
+			name: "action with content on same line - no warning",
+			html: `<div>{{ .Title }}</div>`,
+		},
+		{
+			name: "inline conditional - no warning",
+			html: `<div class="{{ if .Active }}active{{ end }}">content</div>`,
+		},
+		{
+			name: "output expression alone on line - no warning",
+			html: `<div>
+{{ .Title }}
+</div>`,
+		},
+		{
+			name: "range without trim",
+			html: `{{ range .Items }}
+<li>{{ .Name }}</li>
+{{ end }}`,
+			wantRule: rules.RuleTemplateWhitespaceTrim,
+		},
+		{
+			name: "with without trim",
+			html: `{{ with .User }}
+<span>{{ .Name }}</span>
+{{ end }}`,
+			wantRule: rules.RuleTemplateWhitespaceTrim,
+		},
+		{
+			name: "else without trim",
+			html: `{{ if .Show }}
+show
+{{ else }}
+hide
+{{ end }}`,
+			wantRule: rules.RuleTemplateWhitespaceTrim,
+		},
+		{
+			name: "else if without trim",
+			html: `{{ if .A }}
+a
+{{ else if .B }}
+b
+{{ end }}`,
+			wantRule: rules.RuleTemplateWhitespaceTrim,
+		},
+		{
+			name: "define without trim",
+			html: `{{ define "foo" }}
+content
+{{ end }}`,
+			wantRule: rules.RuleTemplateWhitespaceTrim,
+		},
+		{
+			name: "template call without trim",
+			html: `{{ template "header" . }}
+<main>content</main>`,
+			wantRule: rules.RuleTemplateWhitespaceTrim,
+		},
+		{
+			name: "block without trim",
+			html: `{{ block "content" . }}
+default content
+{{ end }}`,
+			wantRule: rules.RuleTemplateWhitespaceTrim,
+		},
+		{
+			name: "leading trim only - still warns for trailing",
+			html: `<div>
+{{- if .Show }}
+content
+{{- end }}
+</div>`,
+			wantRule: rules.RuleTemplateWhitespaceTrim,
+		},
+	}
+
+	l := linter.New(nil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results, err := l.LintContent("test.html", []byte(tt.html))
+			if err != nil {
+				t.Fatalf("LintContent() error = %v", err)
+			}
+			checkRule(t, results, rules.RuleTemplateWhitespaceTrim, tt.wantRule)
+		})
+	}
+}
