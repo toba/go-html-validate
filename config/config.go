@@ -27,6 +27,8 @@ type FrameworkConfig struct {
 
 // FileConfig represents the JSON structure of .htmlvalidate.json.
 type FileConfig struct {
+	// Schema is the JSON schema URL (ignored, but allowed for IDE support).
+	Schema string `json:"$schema"`
 	// Root stops parent directory searching when true.
 	Root bool `json:"root"`
 	// Extends lists presets or config files to extend.

@@ -5,6 +5,11 @@
   "description": "Configuration schema for htmlint (.htmlvalidate.json)",
   "type": "object",
   "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "JSON Schema reference for IDE support"
+    },
     "root": {
       "type": "boolean",
       "default": false,
@@ -49,6 +54,7 @@
         "heading-content": { "$ref": "#/$defs/ruleSeverity" },
         "heading-level": { "$ref": "#/$defs/ruleSeverity" },
         "hidden-focusable": { "$ref": "#/$defs/ruleSeverity" },
+        "htmx-attributes": { "$ref": "#/$defs/ruleSeverity" },
         "id-pattern": { "$ref": "#/$defs/ruleSeverity" },
         "img-alt": { "$ref": "#/$defs/ruleSeverity" },
         "input-attributes": { "$ref": "#/$defs/ruleSeverity" },
