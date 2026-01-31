@@ -13,14 +13,23 @@ import (
 
 // HTMXAttributes validates htmx attribute values.
 type HTMXAttributes struct {
-	htmxEnabled bool
-	htmxVersion string
+	htmxEnabled  bool
+	htmxVersion  string
+	customEvents map[string]bool
 }
 
 // Configure implements HTMXConfigurable.
 func (r *HTMXAttributes) Configure(htmxEnabled bool, htmxVersion string) {
 	r.htmxEnabled = htmxEnabled
 	r.htmxVersion = htmxVersion
+}
+
+// ConfigureCustomEvents implements HTMXCustomEventsConfigurable.
+func (r *HTMXAttributes) ConfigureCustomEvents(events []string) {
+	r.customEvents = make(map[string]bool, len(events))
+	for _, e := range events {
+		r.customEvents[strings.ToLower(e)] = true
+	}
 }
 
 // Name returns the rule identifier.
@@ -763,6 +772,11 @@ func (r *HTMXAttributes) validateHxOn(filename string, n *parser.Node, attrKey s
 	// Check for htmx events
 	if strings.HasPrefix(eventName, "htmx:") || strings.HasPrefix(lowerEvent, "htmx:") {
 		return r.validateHTMXEvent(filename, n, eventName)
+	}
+
+	// Check custom events whitelist
+	if r.customEvents[lowerEvent] {
+		return nil
 	}
 
 	// Unknown event - could be a custom event, warn

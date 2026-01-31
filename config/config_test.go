@@ -208,6 +208,64 @@ func TestToLinterConfig(t *testing.T) {
 	}
 }
 
+func TestToLinterConfig_HTMXCustomEvents(t *testing.T) {
+	fileCfg := &config.FileConfig{
+		Frameworks: config.FrameworkConfig{
+			HTMX:             true,
+			HTMXVersion:      "2",
+			HTMXCustomEvents: []string{"count", "notification", "status"},
+		},
+	}
+
+	linterCfg := config.ToLinterConfig(fileCfg, "")
+
+	if !linterCfg.Frameworks.HTMX {
+		t.Error("expected HTMX to be enabled")
+	}
+	if len(linterCfg.Frameworks.HTMXCustomEvents) != 3 {
+		t.Fatalf("expected 3 custom events, got %d", len(linterCfg.Frameworks.HTMXCustomEvents))
+	}
+	want := []string{"count", "notification", "status"}
+	for i, ev := range want {
+		if linterCfg.Frameworks.HTMXCustomEvents[i] != ev {
+			t.Errorf("custom event %d = %q, want %q", i, linterCfg.Frameworks.HTMXCustomEvents[i], ev)
+		}
+	}
+}
+
+func TestLoadFile_HTMXCustomEvents(t *testing.T) {
+	dir := t.TempDir()
+	content := `{
+		"frameworks": {
+			"htmx": true,
+			"htmx-version": "2",
+			"htmx-custom-events": ["count", "notification"]
+		}
+	}`
+	path := filepath.Join(dir, config.ConfigFileName)
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := config.LoadFile(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !cfg.Frameworks.HTMX {
+		t.Error("expected HTMX to be enabled")
+	}
+	if len(cfg.Frameworks.HTMXCustomEvents) != 2 {
+		t.Fatalf("expected 2 custom events, got %d", len(cfg.Frameworks.HTMXCustomEvents))
+	}
+	if cfg.Frameworks.HTMXCustomEvents[0] != "count" {
+		t.Errorf("custom event 0 = %q, want %q", cfg.Frameworks.HTMXCustomEvents[0], "count")
+	}
+	if cfg.Frameworks.HTMXCustomEvents[1] != "notification" {
+		t.Errorf("custom event 1 = %q, want %q", cfg.Frameworks.HTMXCustomEvents[1], "notification")
+	}
+}
+
 func TestResolveWithPreset(t *testing.T) {
 	dir := t.TempDir()
 	content := `{

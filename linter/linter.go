@@ -37,6 +37,9 @@ func New(cfg *Config) *Linter {
 			if htmxRule, ok := rule.(rules.HTMXConfigurable); ok {
 				htmxRule.Configure(cfg.Frameworks.HTMX, cfg.Frameworks.HTMXVersion)
 			}
+			if customRule, ok := rule.(rules.HTMXCustomEventsConfigurable); ok {
+				customRule.ConfigureCustomEvents(cfg.Frameworks.HTMXCustomEvents)
+			}
 			enabledRules = append(enabledRules, rule)
 		}
 	}

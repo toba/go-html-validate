@@ -1271,3 +1271,38 @@ func TestLintContent_HTMXAppendV2Warning(t *testing.T) {
 		t.Errorf("expected warning about :append being htmx 4 only, got %v", results)
 	}
 }
+
+func TestLintContent_HTMXCustomEvents(t *testing.T) {
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "2"
+	cfg.Frameworks.HTMXCustomEvents = []string{"count", "notification", "Status"}
+	l := linter.New(cfg)
+
+	tests := []htmxTestCase{
+		{
+			name:     "configured custom event count produces no warning",
+			html:     `<div hx-on:count="handleCount()">content</div>`,
+			wantRule: "",
+		},
+		{
+			name:     "configured custom event notification produces no warning",
+			html:     `<div hx-on:notification="handleNotify()">content</div>`,
+			wantRule: "",
+		},
+		{
+			name:       "unconfigured custom event still warns",
+			html:       `<div hx-on:unknown="handleUnknown()">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "unknown event",
+			severity:   rules.Warning,
+		},
+		{
+			name:     "case insensitive match - configured Status matches hx-on:status",
+			html:     `<div hx-on:status="handleStatus()">content</div>`,
+			wantRule: "",
+		},
+	}
+
+	runHTMXTests(t, l, tests)
+}

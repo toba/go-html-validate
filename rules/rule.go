@@ -136,6 +136,11 @@ type HTMXConfigurable interface {
 	Configure(htmxEnabled bool, htmxVersion string)
 }
 
+// HTMXCustomEventsConfigurable is implemented by rules that accept custom event names.
+type HTMXCustomEventsConfigurable interface {
+	ConfigureCustomEvents(events []string)
+}
+
 // RawRule is implemented by rules that need access to the raw file content
 // before template preprocessing. This allows linting template syntax itself.
 type RawRule interface {

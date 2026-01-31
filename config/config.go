@@ -23,6 +23,9 @@ type FrameworkConfig struct {
 	// HTMXVersion specifies which htmx version to validate against ("2" or "4").
 	// Defaults to "2" when HTMX is enabled.
 	HTMXVersion string `json:"htmx-version"`
+	// HTMXCustomEvents lists custom event names that should not trigger
+	// "unknown event" warnings in hx-on:* validation (e.g., SSE-pushed events).
+	HTMXCustomEvents []string `json:"htmx-custom-events"`
 }
 
 // FileConfig represents the JSON structure of .htmlvalidate.json.
@@ -269,6 +272,9 @@ func merge(base, overlay *FileConfig) *FileConfig {
 	if overlay.Frameworks.HTMXVersion != "" {
 		result.Frameworks.HTMXVersion = overlay.Frameworks.HTMXVersion
 	}
+	if len(overlay.Frameworks.HTMXCustomEvents) > 0 {
+		result.Frameworks.HTMXCustomEvents = overlay.Frameworks.HTMXCustomEvents
+	}
 
 	return result
 }
@@ -295,8 +301,9 @@ func ToLinterConfig(fc *FileConfig, configPath string) *linter.Config {
 
 	// Copy frameworks config
 	cfg.Frameworks = linter.FrameworkConfig{
-		HTMX:        fc.Frameworks.HTMX,
-		HTMXVersion: fc.Frameworks.HTMXVersion,
+		HTMX:             fc.Frameworks.HTMX,
+		HTMXVersion:      fc.Frameworks.HTMXVersion,
+		HTMXCustomEvents: fc.Frameworks.HTMXCustomEvents,
 	}
 
 	return cfg
