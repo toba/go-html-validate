@@ -44,6 +44,13 @@ var validSwapValues = map[string]bool{
 	// htmx 4 additions
 	"textcontent": true,
 	"upsert":      true,
+	"innermorph":  true,
+	"outermorph":  true,
+	// htmx 4 aliases
+	"before":  true,
+	"after":   true,
+	"prepend": true,
+	"append":  true,
 }
 
 // Valid hx-swap modifiers.
@@ -55,6 +62,8 @@ var validSwapModifiers = map[string]bool{
 	"focus-scroll": true,
 	"transition":   true,
 	"ignoreTitle":  true,
+	"target":       true,
+	"strip":        true,
 }
 
 // Valid hx-trigger event modifiers.
@@ -170,23 +179,27 @@ var knownHTMXv4Phases = map[string]bool{
 	"after":   true,
 	"error":   true,
 	"finally": true,
+	"config":  true,
 }
 
 var knownHTMXv4Actions = map[string]bool{
-	"request":        true,
-	"swap":           true,
-	"settle":         true,
-	"send":           true,
-	"process":        true,
-	"cleanup":        true,
-	"onLoad":         true,
-	"transition":     true,
-	"viewTransition": true,
-	"history":        true,
-	"historyUpdate":  true,
-	"historySave":    true,
-	"sse":            true,
-	"oob":            true,
+	"request":             true,
+	"swap":                true,
+	"settle":              true,
+	"send":                true,
+	"process":             true,
+	"cleanup":             true,
+	"onload":              true,
+	"transition":          true,
+	"viewtransition":      true,
+	"history":             true,
+	"historyupdate":       true,
+	"historysave":         true,
+	"sse":                 true,
+	"oob":                 true,
+	"init":                true,
+	"implicitinheritance": true,
+	"push":                true,
 }
 
 // Check examines the document for invalid htmx attribute values.
@@ -209,14 +222,39 @@ func (r *HTMXAttributes) Check(doc *parser.Document) []Result {
 				continue
 			}
 
-			// Handle :inherited suffix (htmx 4 only)
+			// Handle :inherited and :append suffixes (htmx 4 only)
 			baseAttrName := attrName
-			if strings.HasSuffix(attrName, ":inherited") {
+			switch {
+			case strings.HasSuffix(attrName, ":inherited:append"):
+				baseAttrName = strings.TrimSuffix(attrName, ":inherited:append")
+				if r.htmxVersion != "4" {
+					results = append(results, Result{
+						Rule:     RuleHTMXAttributes,
+						Message:  ":inherited:append suffix is only available in htmx 4",
+						Filename: doc.Filename,
+						Line:     n.Line,
+						Col:      n.Col,
+						Severity: Warning,
+					})
+				}
+			case strings.HasSuffix(attrName, ":inherited"):
 				baseAttrName = strings.TrimSuffix(attrName, ":inherited")
 				if r.htmxVersion != "4" {
 					results = append(results, Result{
 						Rule:     RuleHTMXAttributes,
 						Message:  ":inherited suffix is only available in htmx 4",
+						Filename: doc.Filename,
+						Line:     n.Line,
+						Col:      n.Col,
+						Severity: Warning,
+					})
+				}
+			case strings.HasSuffix(attrName, ":append"):
+				baseAttrName = strings.TrimSuffix(attrName, ":append")
+				if r.htmxVersion != "4" {
+					results = append(results, Result{
+						Rule:     RuleHTMXAttributes,
+						Message:  ":append suffix is only available in htmx 4",
 						Filename: doc.Filename,
 						Line:     n.Line,
 						Col:      n.Col,
@@ -281,8 +319,15 @@ func (r *HTMXAttributes) validateSwap(filename string, n *parser.Node, value str
 	// First part is the swap strategy
 	baseValue := strings.ToLower(parts[0])
 
+	// v4-only swap values
+	v4OnlySwapValues := map[string]bool{
+		"textcontent": true, "upsert": true,
+		"innermorph": true, "outermorph": true,
+		"before": true, "after": true, "prepend": true, "append": true,
+	}
+
 	// Check for htmx 4 only values when using v2
-	if r.htmxVersion != "4" && (baseValue == "textcontent" || baseValue == "upsert") {
+	if r.htmxVersion != "4" && v4OnlySwapValues[baseValue] {
 		results = append(results, Result{
 			Rule:     RuleHTMXAttributes,
 			Message:  "hx-swap value '" + baseValue + "' is only available in htmx 4",
@@ -378,6 +423,17 @@ func (r *HTMXAttributes) validateSwap(filename string, n *parser.Node, value str
 				results = append(results, Result{
 					Rule:     RuleHTMXAttributes,
 					Message:  "hx-swap transition modifier should be 'true' or 'false'",
+					Filename: filename,
+					Line:     n.Line,
+					Col:      n.Col,
+					Severity: Error,
+				})
+			}
+		case "strip":
+			if modValue != "true" && modValue != "false" {
+				results = append(results, Result{
+					Rule:     RuleHTMXAttributes,
+					Message:  "hx-swap strip modifier should be 'true' or 'false'",
 					Filename: filename,
 					Line:     n.Line,
 					Col:      n.Col,
@@ -483,6 +539,25 @@ func (r *HTMXAttributes) validateSingleTrigger(filename string, n *parser.Node, 
 		return results
 	}
 
+	// Handle "revealed" trigger (auto-disconnecting intersect, only accepts "once")
+	if eventName == "revealed" {
+		for i := 1; i < len(parts); i++ {
+			mod := parts[i]
+			if mod == "once" {
+				continue
+			}
+			results = append(results, Result{
+				Rule:     RuleHTMXAttributes,
+				Message:  "unknown revealed modifier '" + mod + "'",
+				Filename: filename,
+				Line:     n.Line,
+				Col:      n.Col,
+				Severity: Warning,
+			})
+		}
+		return results
+	}
+
 	// Validate remaining modifiers
 	for i := 1; i < len(parts); i++ {
 		modifier := parts[i]
@@ -571,10 +646,15 @@ func (r *HTMXAttributes) validateTarget(filename string, n *parser.Node, value s
 
 	// Valid special values
 	specialValues := map[string]bool{
-		"this":     true,
-		"next":     true,
-		"previous": true,
-		"body":     true,
+		"this":                   true,
+		"next":                   true,
+		"previous":               true,
+		"body":                   true,
+		"document":               true,
+		"window":                 true,
+		"host":                   true,
+		"nextelementsibling":     true,
+		"previouselementsibling": true,
 	}
 
 	// Handle single-word values
@@ -598,6 +678,7 @@ func (r *HTMXAttributes) validateTarget(filename string, n *parser.Node, value s
 	validKeywords := map[string]bool{
 		"closest":  true,
 		"find":     true,
+		"findall":  true,
 		"next":     true,
 		"previous": true,
 	}
@@ -605,7 +686,7 @@ func (r *HTMXAttributes) validateTarget(filename string, n *parser.Node, value s
 	if !validKeywords[keyword] && !specialValues[keyword] {
 		results = append(results, Result{
 			Rule:     RuleHTMXAttributes,
-			Message:  "invalid hx-target keyword '" + parts[0] + "'; expected 'this', 'closest', 'find', 'next', 'previous', or a CSS selector",
+			Message:  "invalid hx-target keyword '" + parts[0] + "'; expected 'this', 'closest', 'find', 'findAll', 'next', 'previous', or a CSS selector",
 			Filename: filename,
 			Line:     n.Line,
 			Col:      n.Col,
@@ -749,6 +830,7 @@ func (r *HTMXAttributes) validateHTMXv4Event(filename string, n *parser.Node, ev
 		// Could be a standalone event like htmx:load, htmx:abort
 		standaloneEvents := map[string]bool{
 			"load": true, "abort": true, "trigger": true, "confirm": true, "prompt": true,
+			"every": true,
 		}
 		if standaloneEvents[phase] {
 			return nil // Valid standalone event
@@ -780,6 +862,8 @@ func (r *HTMXAttributes) validateHTMXv4Event(filename string, n *parser.Node, ev
 				Severity: Warning,
 			}}
 		}
+		// Any remaining sub-action parts (actionParts[1]) are action-specific
+		// qualifiers and are accepted without further validation.
 	}
 
 	return nil
@@ -1073,7 +1157,7 @@ func (r *HTMXAttributes) validateHxStatus(filename string, n *parser.Node, attrK
 }
 
 // httpStatusPattern matches valid HTTP status codes (100-599) and wildcard patterns (1xx-5xx).
-var httpStatusPattern = regexp.MustCompile(`^[1-5](?:\d{2}|xx)$`)
+var httpStatusPattern = regexp.MustCompile(`^[1-5](?:\d{2}|\dx|xx)$`)
 
 // validateHTTPStatusCode validates an HTTP status code or wildcard pattern.
 func validateHTTPStatusCode(code string) error {
@@ -1087,7 +1171,7 @@ func validateHTTPStatusCode(code string) error {
 	}
 
 	// If it's an exact code (not wildcard), check the range
-	if !strings.HasSuffix(code, "xx") {
+	if !strings.Contains(code, "x") {
 		codeNum, err := strconv.Atoi(code)
 		if err != nil {
 			return errors.New("'" + code + "' is not a valid number")

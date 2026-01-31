@@ -115,14 +115,31 @@ func ValidateHTMXAttribute(name, version string) (valid, deprecated, v4Only bool
 		return false, false, true
 	}
 
-	// Handle :inherited suffix (v4 only, but the base attribute should be valid)
+	// Handle :inherited and :append suffixes (v4 only, but the base attribute should be valid)
 	baseName := name
-	if strings.HasSuffix(name, ":inherited") {
+	switch {
+	case strings.HasSuffix(name, ":inherited:append"):
+		baseName = strings.TrimSuffix(name, ":inherited:append")
+		if version != "4" {
+			if HTMXv2Attributes[baseName] {
+				return false, false, true // :inherited:append is v4-only
+			}
+			return false, false, false
+		}
+	case strings.HasSuffix(name, ":inherited"):
 		baseName = strings.TrimSuffix(name, ":inherited")
 		if version != "4" {
 			// Check if base attribute is valid for v2
 			if HTMXv2Attributes[baseName] {
 				return false, false, true // :inherited is v4-only
+			}
+			return false, false, false
+		}
+	case strings.HasSuffix(name, ":append"):
+		baseName = strings.TrimSuffix(name, ":append")
+		if version != "4" {
+			if HTMXv2Attributes[baseName] {
+				return false, false, true // :append is v4-only
 			}
 			return false, false, false
 		}

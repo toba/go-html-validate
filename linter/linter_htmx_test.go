@@ -878,11 +878,8 @@ func TestLintContent_HTMXStatusV4(t *testing.T) {
 			severity:   rules.Error,
 		},
 		{
-			name:       "invalid partial wildcard",
-			html:       `<div hx-get="/api" hx-status:40x="none">content</div>`,
-			wantRule:   rules.RuleHTMXAttributes,
-			wantSubstr: "not a valid HTTP status",
-			severity:   rules.Error,
+			name: "valid partial wildcard 40x",
+			html: `<div hx-get="/api" hx-status:40x="none">content</div>`,
 		},
 	}
 
@@ -972,5 +969,305 @@ func TestLintContent_HTMXInheritedV2Warning(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("expected warning about :inherited being htmx 4 only, got %v", results)
+	}
+}
+
+func TestLintContent_HTMXSwapV4NewValues(t *testing.T) {
+	tests := []struct {
+		name     string
+		html     string
+		version  string
+		wantRule string
+	}{
+		{
+			name:    "innerMorph valid in v4",
+			html:    `<div hx-get="/api" hx-swap="innerMorph">content</div>`,
+			version: "4",
+		},
+		{
+			name:    "outerMorph valid in v4",
+			html:    `<div hx-get="/api" hx-swap="outerMorph">content</div>`,
+			version: "4",
+		},
+		{
+			name:    "before alias valid in v4",
+			html:    `<div hx-get="/api" hx-swap="before">content</div>`,
+			version: "4",
+		},
+		{
+			name:    "after alias valid in v4",
+			html:    `<div hx-get="/api" hx-swap="after">content</div>`,
+			version: "4",
+		},
+		{
+			name:    "prepend alias valid in v4",
+			html:    `<div hx-get="/api" hx-swap="prepend">content</div>`,
+			version: "4",
+		},
+		{
+			name:    "append alias valid in v4",
+			html:    `<div hx-get="/api" hx-swap="append">content</div>`,
+			version: "4",
+		},
+		{
+			name:     "innerMorph warns in v2",
+			html:     `<div hx-get="/api" hx-swap="innerMorph">content</div>`,
+			version:  "2",
+			wantRule: rules.RuleHTMXAttributes,
+		},
+		{
+			name:     "before alias warns in v2",
+			html:     `<div hx-get="/api" hx-swap="before">content</div>`,
+			version:  "2",
+			wantRule: rules.RuleHTMXAttributes,
+		},
+		{
+			name:     "after alias warns in v2",
+			html:     `<div hx-get="/api" hx-swap="after">content</div>`,
+			version:  "2",
+			wantRule: rules.RuleHTMXAttributes,
+		},
+		{
+			name:     "prepend alias warns in v2",
+			html:     `<div hx-get="/api" hx-swap="prepend">content</div>`,
+			version:  "2",
+			wantRule: rules.RuleHTMXAttributes,
+		},
+		{
+			name:     "append alias warns in v2",
+			html:     `<div hx-get="/api" hx-swap="append">content</div>`,
+			version:  "2",
+			wantRule: rules.RuleHTMXAttributes,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := linter.DefaultConfig()
+			cfg.Frameworks.HTMX = true
+			cfg.Frameworks.HTMXVersion = tt.version
+			l := linter.New(cfg)
+
+			results, err := l.LintContent("test.html", []byte(tt.html))
+			if err != nil {
+				t.Fatalf("LintContent() error = %v", err)
+			}
+
+			checkRule(t, results, rules.RuleHTMXAttributes, tt.wantRule)
+		})
+	}
+}
+
+func TestLintContent_HTMXSwapModifiersTargetStrip(t *testing.T) {
+	tests := []htmxTestCase{
+		{
+			name: "valid target modifier",
+			html: `<div hx-get="/api" hx-swap="innerHTML target:#result">content</div>`,
+		},
+		{
+			name: "valid strip true",
+			html: `<div hx-get="/api" hx-swap="innerHTML strip:true">content</div>`,
+		},
+		{
+			name: "valid strip false",
+			html: `<div hx-get="/api" hx-swap="innerHTML strip:false">content</div>`,
+		},
+		{
+			name:       "invalid strip value",
+			html:       `<div hx-get="/api" hx-swap="innerHTML strip:maybe">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "strip modifier should be 'true' or 'false'",
+			severity:   rules.Error,
+		},
+	}
+
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "4"
+	l := linter.New(cfg)
+
+	runHTMXTests(t, l, tests)
+}
+
+func TestLintContent_HTMXRevealedTrigger(t *testing.T) {
+	tests := []htmxTestCase{
+		{
+			name: "revealed with once",
+			html: `<div hx-get="/api" hx-trigger="revealed once">content</div>`,
+		},
+		{
+			name:       "revealed with invalid modifier",
+			html:       `<div hx-get="/api" hx-trigger="revealed root:#foo">content</div>`,
+			wantRule:   rules.RuleHTMXAttributes,
+			wantSubstr: "unknown revealed modifier",
+			severity:   rules.Warning,
+		},
+	}
+
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "2"
+	l := linter.New(cfg)
+
+	runHTMXTests(t, l, tests)
+}
+
+func TestLintContent_HTMXTargetNewKeywords(t *testing.T) {
+	tests := []struct {
+		name     string
+		html     string
+		wantRule string
+	}{
+		{
+			name: "document target",
+			html: `<div hx-get="/api" hx-target="document">content</div>`,
+		},
+		{
+			name: "window target",
+			html: `<div hx-get="/api" hx-target="window">content</div>`,
+		},
+		{
+			name: "host target",
+			html: `<div hx-get="/api" hx-target="host">content</div>`,
+		},
+		{
+			name: "nextElementSibling target",
+			html: `<div hx-get="/api" hx-target="nextElementSibling">content</div>`,
+		},
+		{
+			name: "previousElementSibling target",
+			html: `<div hx-get="/api" hx-target="previousElementSibling">content</div>`,
+		},
+		{
+			name: "findAll keyword",
+			html: `<div hx-get="/api" hx-target="findAll .item">content</div>`,
+		},
+	}
+
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "4"
+	l := linter.New(cfg)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results, err := l.LintContent("test.html", []byte(tt.html))
+			if err != nil {
+				t.Fatalf("LintContent() error = %v", err)
+			}
+
+			checkRule(t, results, rules.RuleHTMXAttributes, tt.wantRule)
+		})
+	}
+}
+
+func TestLintContent_HTMXv4NewEvents(t *testing.T) {
+	tests := []htmxTestCase{
+		{
+			name: "valid htmx:config:request",
+			html: `<div hx-get="/api" hx-on:htmx:config:request="cfg()">content</div>`,
+		},
+		{
+			name: "valid htmx:before:init",
+			html: `<div hx-get="/api" hx-on:htmx:before:init="setup()">content</div>`,
+		},
+		{
+			name: "valid htmx:after:implicitInheritance",
+			html: `<div hx-get="/api" hx-on:htmx:after:implicitinheritance="done()">content</div>`,
+		},
+		{
+			name: "valid htmx:every standalone",
+			html: `<div hx-get="/api" hx-on:htmx:every="poll()">content</div>`,
+		},
+		// Compound sub-actions
+		{
+			name: "valid compound htmx:before:sse:reconnect",
+			html: `<div hx-get="/api" hx-on:htmx:before:sse:reconnect="handle()">content</div>`,
+		},
+		{
+			name: "valid compound htmx:after:push:into:history",
+			html: `<div hx-get="/api" hx-on:htmx:after:push:into:history="done()">content</div>`,
+		},
+	}
+
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "4"
+	l := linter.New(cfg)
+
+	runHTMXTests(t, l, tests)
+}
+
+func TestLintContent_HTMXStatusPartialWildcard(t *testing.T) {
+	tests := []htmxTestCase{
+		{
+			name: "valid 40x pattern",
+			html: `<div hx-get="/api" hx-status:40x="none">content</div>`,
+		},
+		{
+			name: "valid 50x pattern",
+			html: `<div hx-get="/api" hx-status:50x="none">content</div>`,
+		},
+		{
+			name: "valid 20x pattern",
+			html: `<div hx-get="/api" hx-status:20x="innerHTML">content</div>`,
+		},
+	}
+
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "4"
+	l := linter.New(cfg)
+
+	runHTMXTests(t, l, tests)
+}
+
+func TestLintContent_HTMXAppendSuffix(t *testing.T) {
+	tests := []htmxTestCase{
+		// Valid :append in v4
+		{
+			name: "valid hx-vals:append",
+			html: `<div hx-post="/api" hx-vals:append='{"extra": "val"}'>content</div>`,
+		},
+		{
+			name: "valid hx-headers:append",
+			html: `<div hx-post="/api" hx-headers:append='{"X-Extra": "val"}'>content</div>`,
+		},
+		{
+			name: "valid hx-swap:inherited:append",
+			html: `<div hx-get="/api" hx-swap:inherited:append="innerHTML">content</div>`,
+		},
+	}
+
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "4"
+	l := linter.New(cfg)
+
+	runHTMXTests(t, l, tests)
+}
+
+func TestLintContent_HTMXAppendV2Warning(t *testing.T) {
+	html := `<div hx-post="/api" hx-vals:append='{"extra": "val"}'>content</div>`
+
+	cfg := linter.DefaultConfig()
+	cfg.Frameworks.HTMX = true
+	cfg.Frameworks.HTMXVersion = "2"
+	l := linter.New(cfg)
+
+	results, err := l.LintContent("test.html", []byte(html))
+	if err != nil {
+		t.Fatalf("LintContent() error = %v", err)
+	}
+
+	found := false
+	for _, r := range results {
+		if r.Rule == rules.RuleHTMXAttributes && strings.Contains(r.Message, ":append suffix is only available in htmx 4") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected warning about :append being htmx 4 only, got %v", results)
 	}
 }
